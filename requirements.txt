@@ -1,0 +1,4 @@
+Pillow
+opencv-python >= 4.4.0
+imutils
+numpy
