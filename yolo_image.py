@@ -12,9 +12,7 @@ import pyheal
 CONFIDENCE_THRESHOLD = 0.2
 NMS_THRESHOLD = 0.4
 
-impath = "examples/videoblocks-hd-version-wide-shot-of-beautiful-airplane-takeoff-during-sunset-no-logos-ready-for-commercial-use_hwlzbzdqgu_thumbnail-1080_01.png"
-#impath = "examples/2.jpg"
-#impath = "examples/Airplane_2500.jpg"
+impath = "examples/p1.jpg"
 
 weights = glob.glob("yolo/*.weights")[0]
 labels = glob.glob("yolo/*.txt")[0]
@@ -34,6 +32,7 @@ layer = [layer[i[0] - 1] for i in net.getUnconnectedOutLayers()]
 def detect(imgpath, nn):
     image = cv2.imread(imgpath)
     image_copy = image.copy()
+    image_copy2 = image.copy()
 
     (H, W) = image.shape[:2]
 
@@ -77,25 +76,28 @@ def detect(imgpath, nn):
             cv2.putText(image_copy, text, (x, y -5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
             label = "Inference Time: {:.2f} ms".format(end_time - start_time)
             cv2.putText(image_copy, label, (0, 25), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,0), 2)
-
-            mask = cv2.rectangle(image, (x, y), (x+w, y + h), (255, 255, 255), -1)
-            mask = cv2.rectangle(image, (0, 0), (W, H - (H - y)), (0, 0, 0), -1)
-            mask = cv2.rectangle(image, (0, 0), (W - (W - x), H), (0, 0, 0), -1)
-            mask = cv2.rectangle(image, ((x + w), 0), (W, H), (0, 0, 0), -1)
-            mask = cv2.rectangle(image, (0, y + h), (W, H), (0, 0, 0), -1)
+            img = imageio.imread(imgpath)
+            mask = cv2.rectangle(img, (x, y), (x+w, y + h), (255, 255, 255), -1)
+            mask = cv2.rectangle(img, (0, 0), (W, H - (H - y)), (0, 0, 0), -1)
+            mask = cv2.rectangle(img, (0, 0), (W - (W - x), H), (0, 0, 0), -1)
+            mask = cv2.rectangle(img, ((x + w), 0), (W, H), (0, 0, 0), -1)
+            mask = cv2.rectangle(img, (0, y + h), (W, H), (0, 0, 0), -1)
             cv2.imwrite("mask.png", mask)
 
-            img = imageio.imread(imgpath)
+            #новый экземпляр чистой картинки
+            #img = imageio.imread(imgpath)
+            #полученная после дорисовки прямоугольниками маска
             mask_img = imageio.imread("mask.png")
             mask = mask_img[:, :, 0].astype(bool, copy=False)
-            pyheal.inpaint(img, mask, 3)
-            imageio.imwrite("inpainted.png", img)
+            pyheal.inpaint(image_copy2, mask, 3)
+            #полученный после дорисовки фона результат
+            imageio.imwrite("inpainted.png", image_copy2)
 
             inpainted = cv2.imread("inpainted.png")
             inpainted = cv2.cvtColor(inpainted, cv2.COLOR_BGR2RGB)
 
             src = cv2.imread("helicopter.png")
-            src = cv2.cvtColor(src, cv2.COLOR_BGR2RGB)
+            #src = cv2.cvtColor(src, cv2.COLOR_BGR2RGB)
 
             src_mask = np.zeros(src.shape, src.dtype)
             poly = np.array([[29,15], [507,14], [1330,11], [1329,803], [7,803], [33,59]], np.int32)
@@ -125,11 +127,11 @@ def detect(imgpath, nn):
                 x = int(x_centered)
 
             output = cv2.seamlessClone(src, inpainted, src_mask, (x, y), cv2.NORMAL_CLONE)
-            output = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
+            #output = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
 
             # Save result
             cv2.imwrite("result.jpg", output)
-
+            image_copy2 = output
             im1 = Image.open('result.jpg')
             im1.show()
         #cv2.imshow("image", mask)
