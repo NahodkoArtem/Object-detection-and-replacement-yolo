@@ -1,0 +1,4 @@
+classes= 2
+train  = data/coco/trainvalno5k.txt
+valid  = data/coco_testdev
+names = data/voc.names
